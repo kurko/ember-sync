@@ -10,6 +10,7 @@
     "ember-data": "1.0.0-beta.8"
   },
   "devDependencies": {
-    "qunit": ""
+    "qunit": "",
+    "ember-localstorage-adapter": "git@github.com:rpflorence/ember-localstorage-adapter.git#master"
   }
 }
