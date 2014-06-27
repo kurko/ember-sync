@@ -1,8 +1,8 @@
 {
   "name": "Ember-Sync",
   "repository": {
-    "type" : "git",
-    "url" : "http://github.com/npm/npm.git"
+    "type": "git",
+    "url": "http://github.com/kurko/ember-sync.git"
   },
   "devDependencies": {
     "bower": "",
@@ -12,6 +12,9 @@
     "broccoli-es6-concatenator": "^0.1.4",
     "broccoli-template": "^0.1.0",
     "broccoli-merge-trees": "^0.1.3",
-    "broccoli-bower": "^0.2.0"
+    "broccoli-bower": "^0.2.0",
+    "broccoli-es6-transpiler": "^0.1.0"
+  },
+  "dependencies": {
   }
 }

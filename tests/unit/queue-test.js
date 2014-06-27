@@ -1,5 +1,5 @@
-var EmberSyncQueueModel = require('lib/ember-sync-queue-model').default;
-var EmberSyncQueue = require('lib/queue').default;
+var EmberSyncQueueModel = require('lib/ember-sync/ember-sync-queue-model').default;
+var EmberSyncQueue = require('lib/ember-sync/queue').default;
 
 var subject,
     env,

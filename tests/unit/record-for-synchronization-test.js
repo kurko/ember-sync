@@ -1,5 +1,5 @@
-var EmberSyncQueueModel = require('lib/ember-sync-queue-model').default;
-var RecordForSynchronization = require('lib/record-for-synchronization').default;
+var EmberSyncQueueModel = require('lib/ember-sync/ember-sync-queue-model').default;
+var RecordForSynchronization = require('lib/ember-sync/record-for-synchronization').default;
 
 var env = {}, emberSync, subject,
     onlineResults, jobRecord, jobRecordModel,

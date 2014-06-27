@@ -2,36 +2,56 @@ var pickFiles = require('broccoli-static-compiler')
 var mergeTrees = require('broccoli-merge-trees')
 var env = require('broccoli-env').getEnv();
 var compileES6 = require('broccoli-es6-concatenator');
+//var es6transpiler = require('broccoli-es6-transpiler');
 var findBowerTrees = require('broccoli-bower');
 
-var lib = pickFiles('lib', {
-  srcDir: '/',
-  destDir: '/lib'
-});
+var sourceTrees = [];
 
-var sourceTrees = [lib, 'vendor'];
-sourceTrees = sourceTrees.concat(findBowerTrees())
+if (env === 'production') {
 
-var js = new mergeTrees(sourceTrees, { overwrite: true })
+  // Build file
+  sourceTrees = sourceTrees.concat('vendor')
+  var js = new mergeTrees(sourceTrees, { overwrite: true })
 
-js = compileES6(js, {
-  loaderFile: 'loader.js',
-  inputFiles: [
-    'lib/**/*.js'
-  ],
-  legacyFilesToAppend: [
-    'jquery.js',
-    'ember.js',
-    'ember-data.js',
-    'localstorage_adapter.js',
-  ],
-  wrapInEval: env !== 'production',
-  outputFile: '/assets/app.js'
-});
+  js = compileES6('lib', {
+    loaderFile: '../vendor/loader.js',
+    inputFiles: [
+      '**/*.js'
+    ],
+    wrapInEval: false,
+    outputFile: '/ember-sync.js'
+  });
+  sourceTrees = sourceTrees.concat(js);
 
-sourceTrees = sourceTrees.concat(js);
+} else if (env === 'development') {
 
-if (env !== 'production') {
+  var lib = pickFiles('lib', {
+    srcDir: '/',
+    destDir: '/lib'
+  });
+
+  sourceTrees = sourceTrees.concat(lib)
+  sourceTrees = sourceTrees.concat(findBowerTrees())
+  sourceTrees = sourceTrees.concat('vendor')
+  var js = new mergeTrees(sourceTrees, { overwrite: true })
+
+  js = compileES6(js, {
+    loaderFile: 'loader.js',
+    inputFiles: [
+      'lib/**/*.js'
+    ],
+    legacyFilesToAppend: [
+      'jquery.js',
+      'ember.js',
+      'ember-data.js',
+      'localstorage_adapter.js',
+    ],
+    wrapInEval: true,
+    outputFile: '/assets/app.js'
+  });
+
+  sourceTrees = sourceTrees.concat(js);
+
   var tests = pickFiles('tests', {
     srcDir: '/',
     destDir: '/tests'
@@ -39,6 +59,6 @@ if (env !== 'production') {
   sourceTrees.push(tests)
 
   sourceTrees = sourceTrees.concat(tests);
-}
 
+}
 module.exports = mergeTrees(sourceTrees, { overwrite: true });

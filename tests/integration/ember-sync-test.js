@@ -1,5 +1,5 @@
-var EmberSyncQueueModel = require('lib/ember-sync-queue-model').default;
-var EmberSync = require(["lib/api"]).default;
+var EmberSyncQueueModel = require('lib/ember-sync/ember-sync-queue-model').default;
+var EmberSync = require(["lib/ember-sync"]).default;
 
 var env = {}, emberSync,
     onlineResults,
