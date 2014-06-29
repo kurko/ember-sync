@@ -1,71 +1,20 @@
-var define, requireModule, require, requirejs;
-
-(function() {
-  var registry = {}, seen = {};
-
-  define = function(name, deps, callback) {
-    registry[name] = { deps: deps, callback: callback };
-  };
-
-  requirejs = require = requireModule = function(name) {
-  requirejs._eak_seen = registry;
-
-    if (seen.hasOwnProperty(name)) { return seen[name]; }
-    seen[name] = {};
-
-    if (!registry[name]) {
-      throw new Error("Could not find module " + name);
-    }
-
-    var mod = registry[name],
-        deps = mod.deps,
-        callback = mod.callback,
-        reified = [],
-        exports;
-
-    for (var i=0, l=deps.length; i<l; i++) {
-      if (deps[i] === 'exports') {
-        reified.push(exports = {});
-      } else {
-        reified.push(requireModule(resolve(deps[i])));
-      }
-    }
-
-    var value = callback.apply(this, reified);
-    return seen[name] = exports || value;
-
-    function resolve(child) {
-      if (child.charAt(0) !== '.') { return child; }
-      var parts = child.split("/");
-      var parentBase = name.split("/").slice(0, -1);
-
-      for (var i=0, l=parts.length; i<l; i++) {
-        var part = parts[i];
-
-        if (part === '..') { parentBase.pop(); }
-        else if (part === '.') { continue; }
-        else { parentBase.push(part); }
-      }
-
-      return parentBase.join("/");
-    }
-  };
-})();
 
 ;define("ember-sync", 
-  ["ember-sync/store-initialization-mixin","ember-sync/queue","ember-sync/query","ember-sync/persistence","exports"],
-  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __exports__) {
+  ["ember-sync/store-initialization-mixin","ember-sync/queue","ember-sync/query","ember-sync/persistence","ember-sync/ember-sync-queue-model","exports"],
+  function(__dependency1__, __dependency2__, __dependency3__, __dependency4__, __dependency5__, __exports__) {
     "use strict";
     var StoreInitMixin = __dependency1__["default"];
     var Queue = __dependency2__["default"];
     var Query = __dependency3__["default"];
     var Persistence = __dependency4__["default"];
+    var QueueModel = __dependency5__["default"];
 
     __exports__["default"] = Ember.Object.extend(
       StoreInitMixin, {
 
       onError: function() { },
 
+      queueModel: QueueModel,
       /**
        * Pushes pending record to the server.
        *

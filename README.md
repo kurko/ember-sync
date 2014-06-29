@@ -19,6 +19,9 @@ automatically for you.
 
 Ember Data is required.
 
+**Important:** you should use UUID to maintain consistency between offline
+and online data.
+
 ### Querying online records
 
 Whenever you search something, Ember Sync will automatically
@@ -44,7 +47,7 @@ want.
 
 For Ember runtime, we'll use Ember CLI.
 
-### Installation
+#### Installation
 
 1. Add `"ember-sync": "^0.1.0"` as a dependency in your `bower.json` file.
 
@@ -54,7 +57,7 @@ For Ember runtime, we'll use Ember CLI.
     app.import('vendor/ember-sync/dist/ember-sync.js', { 'ember-sync': [ 'default' ] });
     ```
 
-### Initialization
+#### Initialization
 
 1. **Define an online store**: to setup Ember Sync you have to define what is
 your online store. It can be done in many ways and it's not
@@ -142,10 +145,50 @@ Ember CLI, this is your `ApplicationRoute`:
 
 ### Saving records
 
+To save records, you can do the following
+
+```js
+var user, book,
+    _this = this;
+
+user = this.emberSync.createRecord('user', { name: 'Robinson Crusoe' });
+book = this.emberSync.createRecord('book', { name: 'The Life of Robinson Crusoe', });
+user.get('books').pushObject(book);
+
+user.save().then(function(user) {
+  book.save();
+});
+```
+
+`createRecord` and `deleteRecord`, which are commonly called on `this.store`,
+are now called on `this.emberSync`. From there on, just call `save()` on the
+models as you normally would.
 
 ### Search records
 
+To find records, just do:
 
+```js
+users = this.emberSync.findQuery('user', {name: 'Robinson Crusoe'});
+```
+
+This will automatically search for that user in both offline and online stores.
+Remember that `findQuery` doesn't return a promise, but instead `Ember.A()`.
+If a record is found offline in 50 miliseconds, it'll show up in your template
+right away. If a record is then found on your RESTAdapter 3 seconds later, the
+array is automatically populated, simulating streams.
+
+Instead of `findQuery`, you can use `find` as well, but it will return a
+Promise:
+
+```js
+user = this.emberSync.find('user', 1);
+```
+
+### Synchronization during download
+
+When doing `findQuery` or `find`, Ember Sync will automatically save the records
+found online in the offline store.
 
 ### Conflict resolution and how records are synchronized
 
