@@ -11,15 +11,23 @@ Ember Sync has a queue of operations. Every time you save, update or delete
 a record in your offline database (e.g LocalStorage, IndexedDB etc) as you
 usually do, a new operation is created in the queue.
 
-The queue is processed in order and records are synchronized with the online
-store (e.g RESTAdapter). This online store is used by Ember Sync and is created
-automatically for you.
+The queue is processed in order and each operation is executed
+against the online store. If internet goes offline or your server is down, the
+queue stops being processed. No operations will be run concurrently and the
+order will always be respected.
+
+While you have no internet connection, you can continue using your app and
+all data will be saved offline while new operations will continue being
+enqueued. When internet is restored, the queue will continue being processed
+and pending records will be created or updated against the online store.
 
 ![Ember Sync](http://f.cl.ly/items/2j113g1q0U1L3v3n0W3t/embersync.png)
 
-Ember Data is required.
+#### Requirements
 
-**Important:** you should use UUID to maintain consistency between offline
+* Ember Data is required (tested against 1.0.0-beta.8).
+* You should generate a unique ID for your records (e.g UUID)
+in the client and backend to maintain consistency between offline
 and online data.
 
 ### Querying online records
@@ -30,7 +38,7 @@ a single Ember array.
 
 This means that `findQuery` returns an `Ember.A()` right away instead of a
 promise. If 2 seconds later a response comes from the REST api, Ember Sync
-will push new records to the array that was already being shown in the
+will push new records to that array that was already being shown in the
 template. This mimics how streams work.
 
 In the process, Ember Sync will automatically update your
@@ -143,13 +151,15 @@ Ember CLI, this is your `ApplicationRoute`:
     We have to do it manually because we don't know the name of your online
     store.
 
-### Saving records
+    **Important:** remember to call `this.emberSync.synchronizeOnline()`. This
+    will activate the loop that will take care of the queue.
+
+#### Creating records
 
 To save records, you can do the following
 
 ```js
-var user, book,
-    _this = this;
+var user, book;
 
 user = this.emberSync.createRecord('user', { name: 'Robinson Crusoe' });
 book = this.emberSync.createRecord('book', { name: 'The Life of Robinson Crusoe', });
@@ -164,7 +174,20 @@ user.save().then(function(user) {
 are now called on `this.emberSync`. From there on, just call `save()` on the
 models as you normally would.
 
-### Search records
+In the example above, `user` and `book` could be used in your controllers just
+fine. `this.emberSync.createRecord` returns essentially the same
+as `this.store.createRecord`. For instance:
+
+```js
+// app/routes/user.js
+export default Ember.Route.extend({
+  model: function() {
+    return this.emberSync.createRecord('user', {name: 'Robinson'});
+  }
+});
+```
+
+#### Finding records
 
 To find records, just do:
 
@@ -173,9 +196,10 @@ users = this.emberSync.findQuery('user', {name: 'Robinson Crusoe'});
 ```
 
 This will automatically search for that user in both offline and online stores.
-Remember that `findQuery` doesn't return a promise, but instead `Ember.A()`.
-If a record is found offline in 50 miliseconds, it'll show up in your template
-right away. If a record is then found on your RESTAdapter 3 seconds later, the
+Remember that `findQuery` doesn't return a promise, but `Ember.A()` instead.
+For instance, if a record is found offline in 50 miliseconds, it'll show up in your template
+right away. If another record is then found in your RESTAdapter-based store 3
+seconds later, the
 array is automatically populated, simulating streams.
 
 Instead of `findQuery`, you can use `find` as well, but it will return a
@@ -209,28 +233,41 @@ happen in the server too. The order of which you do operations matters.
 If the REST api goes down, Ember Sync will stop the queue and resume later
 in the same order.
 
+#### Distributed data consistency
+
+Ember Sync will not, however, solve the problem of
+
+> computer 1 and computer 2 are offline, record 1 is altered in both
+
+This sort of conflict should be
+dealt by your backend. Although we plan to build an API to help you figure
+that out in the client, we advise you to architecture your network of
+clients to avoid such conflicts in the first place.
+
 ## Roadmap
 
-The following are planned features and areas that needs improvements.
+The following are planned features and areas that need improvements.
 
 * periodicaly and asynchronously download data from the online store and
 push the records into the offline store, so the user can have a enough data
 to go offline.
 * more granular configuration on how conflicts should be handled.
+* refactor code to smaller objects.
+* encapsulate initializer so user doesn't have to write it explicitly.
 
-
-Tests
+Tests & Build
 -----
 
-First, install depdendencies with bower: `bower install`.
+First, install depdendencies with `npm install` and `bower install`. Then run
+`broccoli serve`.
 
-Run `rackup` in your terminal (make sure you have Ruby and the rack gem installed).
-Then visit `http://localhost:9292` in your browser.
+Visit `http://localhost:4200/tests`.
 
-Please, disregard Travis CI for now because PhantomJS (1.9.3) doesn't support
-IndexedDB. IndexedDBShim.js doesn't work
-on it either, so I'm running tests only in the browser for now. Once version 2
-is here, just use `phantomjs tests/runner.js tests/index.html` in your terminal.
+If you prefer, use `phantomjs tests/runner.js tests/index.html`
+in your terminal.
+
+To build a new version, just run `broccoli build dist`. The build will be
+available in the `dist/` directory.
 
 License & Copyright
 -------------------
