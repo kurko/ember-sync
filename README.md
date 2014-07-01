@@ -170,7 +170,7 @@ book = this.emberSync.createRecord('book', { name: 'The Life of Robinson Crusoe'
 user.get('books').pushObject(book);
 
 user.emberSync.save().then(function(user) {
-  book.eberSync.save();
+  book.emberSync.save();
 });
 ```
 
