@@ -57,6 +57,10 @@ For Ember runtime, we'll use Ember CLI.
 
 #### Installation
 
+##### Ember CLI >= 0.0.37
+1. Run `npm install --save ember-sync` in your project
+
+##### Ember CLI < 0.0.37
 1. Add `"ember-sync": "^0.1.0"` as a dependency in your `bower.json` file.
 
 2. Add the following to you `Brofile.js` and restart your server:
