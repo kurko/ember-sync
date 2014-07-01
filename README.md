@@ -169,13 +169,13 @@ user = this.emberSync.createRecord('user', { name: 'Robinson Crusoe' });
 book = this.emberSync.createRecord('book', { name: 'The Life of Robinson Crusoe', });
 user.get('books').pushObject(book);
 
-user.save().then(function(user) {
-  book.save();
+user.emberSync.save().then(function(user) {
+  book.eberSync.save();
 });
 ```
 
 `createRecord` and `deleteRecord`, which are commonly called on `this.store`,
-are now called on `this.emberSync`. From there on, just call `save()` on the
+are now called on `this.emberSync`. From there on, just call `.emberSync.save()` on the
 models as you normally would.
 
 In the example above, `user` and `book` could be used in your controllers just
