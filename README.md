@@ -114,6 +114,11 @@ would normally do. Here we're using
 [IndexedDBAdapter](https://github.com/kurko/ember-indexeddb-adapter). This
 offline store will be located at `this.store` by default.
 
+    **Important:** if you're using an offline store that requires you to
+    manually create tables/object stores, create `emberSyncQueueModel`.
+    For example, LSAdapter will create it automatically for you, whereas in
+    IndexedDB you will have to do it yourself.
+
 3. **Define an Ember.js initializer:** now we connect Ember Sync with your App.
 
     ```js
