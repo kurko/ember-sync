@@ -57,6 +57,10 @@ For Ember runtime, we'll use Ember CLI.
 
 #### Installation
 
+##### Ember CLI >= 0.0.37
+1. Run `npm install --save ember-sync` in your project
+
+##### Ember CLI < 0.0.37
 1. Add `"ember-sync": "^0.1.0"` as a dependency in your `bower.json` file.
 
 2. Add the following to you `Brofile.js` and restart your server:
@@ -165,13 +169,13 @@ user = this.emberSync.createRecord('user', { name: 'Robinson Crusoe' });
 book = this.emberSync.createRecord('book', { name: 'The Life of Robinson Crusoe', });
 user.get('books').pushObject(book);
 
-user.save().then(function(user) {
-  book.save();
+user.emberSync.save().then(function(user) {
+  book.eberSync.save();
 });
 ```
 
 `createRecord` and `deleteRecord`, which are commonly called on `this.store`,
-are now called on `this.emberSync`. From there on, just call `save()` on the
+are now called on `this.emberSync`. From there on, just call `.emberSync.save()` on the
 models as you normally would.
 
 In the example above, `user` and `book` could be used in your controllers just

@@ -4,6 +4,12 @@
     "type": "git",
     "url": "http://github.com/kurko/ember-sync.git"
   },
+  "ember-addon": {
+    "main": "ember-addon/ember-sync"
+  },
+  "keywords": [
+    "ember-addon"
+  ],
   "devDependencies": {
     "bower": "",
     "broccoli": "^0.12.0",
