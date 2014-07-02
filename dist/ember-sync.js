@@ -14,6 +14,18 @@
 
       onError: function() { },
 
+      /**
+       *
+       * This is called when a record is added from an online or online store and
+       * pushed to the results array. This will be triggered when using the find or
+       * findQuery methods
+       *
+       * @method onRecordAddded
+       */
+      onRecordAdded: function(record, type) {
+        this.embedThisIntoRecord(record, type);
+      },
+
       queueModel: QueueModel,
       /**
        * Pushes pending record to the server.
@@ -60,10 +72,14 @@
        * @return {Promise}
        */
       find: function(type, query) {
+        var _this = this;
         var syncQuery = Query.create({
           onlineStore:  this.onlineStore,
           offlineStore: this.offlineStore,
-          onError:      this.get('onError')
+          onError:      this.get('onError'),
+          onRecordAdded:     function(record) {
+            _this.onRecordAdded(record, type);
+          }
         });
         return syncQuery.find(type, query);
       },
@@ -83,10 +99,14 @@
        * @return {Ember.A}
        */
       findQuery: function(type, query) {
+        var _this = this;
         var syncQuery = Query.create({
           onlineStore:  this.onlineStore,
           offlineStore: this.offlineStore,
-          onError:      this.get('onError')
+          onError:      this.get('onError'),
+          onRecordAdded:     function(record) {
+            _this.onRecordAdded(record, type);
+          }
         });
         return syncQuery.findQuery(type, query);
       },
@@ -853,12 +873,16 @@
        * @param {DS.Model} record
        */
       addResultToResultStream: function(resultStream, results) {
+        var _this = this;
         if (results.get('length')) {
           results.forEach(function(record) {
             var id = record.get('id'),
                 duplicatedId = resultStream.mapBy("id").contains(id);
 
             if (id && (!resultStream.length || !duplicatedId)) {
+              if(_this.onRecordAdded) {
+                _this.onRecordAdded(record);
+              }
               resultStream.pushObject(record);
             }
           });
