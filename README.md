@@ -121,6 +121,8 @@ offline store will be located at `this.store` by default.
 
 3. **Define an Ember.js initializer:** now we connect Ember Sync with your App.
 
+    If you are using the ember-addon version(installed with npm in am ember-cli > 0.0.36) project, you can skip this step.
+
     ```js
     // app/initializers/ember-sync.js
     import { default as EmberSync } from 'ember-sync';
