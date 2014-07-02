@@ -11,6 +11,6 @@
   },
   "devDependencies": {
     "qunit": "",
-    "ember-localstorage-adapter": "git@github.com:rpflorence/ember-localstorage-adapter.git#master"
+    "ember-localstorage-adapter": "~0.3.2"
   }
 }
