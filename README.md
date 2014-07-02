@@ -1,4 +1,4 @@
-Ember Sync
+Ember Sync [![Build Status](https://travis-ci.org/kurko/ember-sync.svg?branch=master)](https://travis-ci.org/kurko/ember-sync)
 ================================
 
 Ember Sync allows your Ember.js application to seamlessly work online and offline.

@@ -10,6 +10,11 @@
   "keywords": [
     "ember-addon"
   ],
+  "scripts": {
+    "test": "broccoli serve",
+    "test-all": "rm -rf test_build && ./node_modules/broccoli-cli/bin/broccoli build test_build && phantomjs test_build/tests/runner.js test_build/tests/index.html",
+    "postinstall": "./node_modules/bower/bin/bower install"
+  },
   "devDependencies": {
     "bower": "",
     "broccoli": "^0.12.0",
@@ -19,8 +24,8 @@
     "broccoli-template": "^0.1.0",
     "broccoli-merge-trees": "^0.1.3",
     "broccoli-bower": "^0.2.0",
-    "broccoli-es6-transpiler": "^0.1.0"
+    "broccoli-es6-transpiler": "^0.1.0",
+    "broccoli-cli": "0.0.1"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }

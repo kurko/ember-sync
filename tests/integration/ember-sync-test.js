@@ -146,7 +146,7 @@ test("#save - creates a record offline and online", function() {
         equal(record.entryForSaleId, "1",            "entryForSaleId is correct");
         equal(record.onSale,         true,           "onSale is correct");
         start();
-      }, 30);
+      }, 50);
 
     }, function() {
       ok(false, "Record saved offline");
