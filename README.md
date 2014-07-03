@@ -167,7 +167,7 @@ Ember CLI, this is your `ApplicationRoute`:
 
 #### Creating records
 
-To save records, you can do the following
+To save records, do the following:
 
 ```js
 var user, book;
@@ -218,6 +218,15 @@ Promise:
 
 ```js
 user = this.emberSync.find('user', 1);
+```
+
+#### Deleting records
+
+To delete a record, do the following:
+
+```js
+this.emberSync.deleteRecord('user', record);
+record.emberSync.save();
 ```
 
 ### Synchronization during download
