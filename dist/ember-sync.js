@@ -14,6 +14,18 @@
 
       onError: function() { },
 
+      /**
+       *
+       * This is called when a record is added from an online or offline store and
+       * pushed to the results array. This will be triggered when using the find or
+       * findQuery methods
+       *
+       * @method onRecordAddded
+       */
+      onRecordAdded: function(record, type) {
+        this.embedThisIntoRecord(record, type);
+      },
+
       queueModel: QueueModel,
       /**
        * Pushes pending record to the server.
@@ -60,10 +72,14 @@
        * @return {Promise}
        */
       find: function(type, query) {
+        var _this = this;
         var syncQuery = Query.create({
           onlineStore:  this.onlineStore,
           offlineStore: this.offlineStore,
-          onError:      this.get('onError')
+          onError:      this.get('onError'),
+          onRecordAdded: function(record) {
+            _this.onRecordAdded(record, type);
+          }
         });
         return syncQuery.find(type, query);
       },
@@ -83,10 +99,14 @@
        * @return {Ember.A}
        */
       findQuery: function(type, query) {
+        var _this = this;
         var syncQuery = Query.create({
           onlineStore:  this.onlineStore,
           offlineStore: this.offlineStore,
-          onError:      this.get('onError')
+          onError:      this.get('onError'),
+          onRecordAdded:     function(record) {
+            _this.onRecordAdded(record, type);
+          }
         });
         return syncQuery.findQuery(type, query);
       },
@@ -701,6 +721,8 @@
     __exports__["default"] = Ember.Object.extend(
       StoreInitMixin, {
 
+      onRecordAdded: function() { },
+
       /**
        * Finds a record both offline and online, returning the first to be found.
        * If an online record is found, it is then pushed into the offline store,
@@ -736,9 +758,10 @@
           var isResolved = false,
               offlineNotFound, onlineNotFound;
 
-          offlineSearch.then(function(result) {
-            if (result.get('id') && !isResolved) {
-              resolve(result);
+          offlineSearch.then(function(record) {
+            if (record.get('id') && !isResolved) {
+              _this.onRecordAdded(record);
+              resolve(record);
               isResolved = true;
             }
           }, function(error) {
@@ -746,8 +769,8 @@
             if (offlineNotFound && onlineNotFound) { reject(error); }
           });
 
-          onlineSearch.then(function(result) {
-            var id = result.get('id'),
+          onlineSearch.then(function(record) {
+            var id = record.get('id'),
                 persistenceState = _this.offlineStore.find(type, id);
 
             var persistRecordOffline = function(onlineRecord) {
@@ -755,12 +778,13 @@
                 onlineStore:  _this.onlineStore,
                 offlineStore: _this.offlineStore,
               });
-              persistence.persistRecordOffline(type, result);
+              persistence.persistRecordOffline(type, record);
             };
 
             persistenceState.then(persistRecordOffline, persistRecordOffline);
             if (!isResolved) {
-              resolve(result);
+              _this.onRecordAdded(record);
+              resolve(record);
               isResolved = true;
             }
           }, function(error) {
@@ -853,12 +877,14 @@
        * @param {DS.Model} record
        */
       addResultToResultStream: function(resultStream, results) {
+        var _this = this;
         if (results.get('length')) {
           results.forEach(function(record) {
             var id = record.get('id'),
                 duplicatedId = resultStream.mapBy("id").contains(id);
 
             if (id && (!resultStream.length || !duplicatedId)) {
+              _this.onRecordAdded(record);
               resultStream.pushObject(record);
             }
           });
@@ -870,7 +896,7 @@
           objectOrArray = Ember.A([objectOrArray]);
         }
         return objectOrArray;
-      },
+      }
     });
   });
 ;define("ember-sync/persistence", 

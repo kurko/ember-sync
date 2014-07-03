@@ -156,7 +156,6 @@ test("#save - creates a record offline and online", function() {
 });
 
 test("#find - searches offline/online simultaneously, syncing online into offline and returning a stream of data", function() {
-
   onlineStore.push('cashEntry', {
     id: 1,
     amount: '120',
@@ -191,6 +190,19 @@ test("#find - searches offline/online simultaneously, syncing online into offlin
         });
       }, 70);
     });
+  });
+});
+
+test("#find - injects emberSync into the returned records", function() {
+  onlineStore.push('cashEntry', { id: 1, amount: '120' });
+
+  stop();
+
+  assertItemDoesntExistOffline('cashEntry', 1).then(function() {
+    return emberSync.find('cashEntry', 1);
+  }).then(function(item) {
+    ok(item.emberSync, "record returned has emberSync injected");
+    start();
   });
 });
 
@@ -267,6 +279,35 @@ test("#findQuery searches offline/online simultaneously, syncing online into off
       }, 20);
     });
   });
+});
+
+test("#findQuery - injects emberSync into the returned records", function() {
+  var onlineFixture = JSON.stringify({
+    inventoryItem: {
+      records: {
+        1: { id: '1', name: "Fender" }
+      }
+    }
+  });
+  var offlineFixture = JSON.stringify({
+    inventoryItem: {
+      records: {
+        2: { id: '2', name: "Fender" }
+      }
+    }
+  });
+  localStorage.setItem('onlineStore', onlineFixture);
+  localStorage.setItem('offlineStore', offlineFixture);
+
+  stop();
+
+  var records = emberSync.findQuery('inventoryItem', { name: 'Fender' });
+  Em.run.later(function() {
+    equal(records.length, 2, "Two records are found");
+    ok(records.objectAt(0).emberSync, "record returned from online store has emberSync injected");
+    ok(records.objectAt(1).emberSync, "record returned from offline store has emberSync injected");
+    start();
+  }, 20);
 });
 
 test("#save - creates a record offline and enqueues online sync", function() {
