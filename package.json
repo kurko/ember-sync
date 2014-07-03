@@ -1,5 +1,7 @@
 {
-  "name": "Ember-Sync",
+  "name": "ember-sync",
+  "version": "0.1.1",
+  "main": "./dist/ember-sync.js",
   "repository": {
     "type": "git",
     "url": "http://github.com/kurko/ember-sync.git"
