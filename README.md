@@ -274,10 +274,10 @@ First, install depdendencies with `npm install` and `bower install`. Then run
 
 Visit `http://localhost:4200/tests`.
 
-If you prefer, use `phantomjs tests/runner.js tests/index.html`
-in your terminal.
+If you prefer, use `npm run-script test-all` in your terminal. You need to
+have PhantomJS installed.
 
-To build a new version, just run `broccoli build dist`. The build will be
+To build a new version, just run `npm run-script build`. The build will be
 available in the `dist/` directory.
 
 License & Copyright

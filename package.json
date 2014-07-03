@@ -15,7 +15,8 @@
   "scripts": {
     "test": "broccoli serve",
     "test-all": "rm -rf test_build && ./node_modules/broccoli-cli/bin/broccoli build test_build && phantomjs test_build/tests/runner.js test_build/tests/index.html",
-    "postinstall": "./node_modules/bower/bin/bower install"
+    "postinstall": "./node_modules/bower/bin/bower install",
+    "build": "rm -rf dist && BROCCOLI_ENV=production broccoli build dist"
   },
   "devDependencies": {
     "bower": "",
