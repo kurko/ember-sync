@@ -15,7 +15,13 @@ module("Integration/Lib/EmberSync", {
       description:    DS.attr('string'),
       price:          DS.attr('string'),
       entryForSaleId: DS.attr('string'),
-      onSale:         DS.attr('boolean')
+      onSale:         DS.attr('boolean'),
+      cartItems:      DS.hasMany('cartItem')
+    });
+
+    var CartItem = DS.Model.extend({
+      name:          DS.attr('string'),
+      inventoryItem: DS.belongsTo('inventoryItem')
     });
 
     var CashEntry = DS.Model.extend({
@@ -27,6 +33,7 @@ module("Integration/Lib/EmberSync", {
     env = setupOfflineOnlineStore({
       inventoryItem: InventoryItem,
       cashEntry: CashEntry,
+      cartItem: CartItem,
       emberSyncQueueModel: EmberSyncQueueModel
     });
 
@@ -146,7 +153,7 @@ test("#save - creates a record offline and online", function() {
         equal(record.entryForSaleId, "1",            "entryForSaleId is correct");
         equal(record.onSale,         true,           "onSale is correct");
         start();
-      }, 50);
+      }, 80);
 
     }, function() {
       ok(false, "Record saved offline");
@@ -671,6 +678,35 @@ test("#save works when no properties were given", function() {
     }, function() {
       ok(false, "Record saved offline");
       start();
+    });
+  });
+});
+
+test("#save - doesn't lose or duplicate relationships from the store", function() {
+  var inventoryItem, cartItem;
+
+  stop();
+  Em.run(function() {
+    inventoryItem = emberSync.createRecord('inventoryItem', { name: "Fender" });
+    cartItem = emberSync.createRecord('cartItem', { price: "12" });
+    equal(inventoryItem.get('cartItems.length'), 0, "inventory has no cart items");
+
+    inventoryItem.get('cartItems').pushObject(cartItem);
+    equal(inventoryItem.get('cartItems.length'), 1, "inventory has 1 cart item");
+
+    inventoryItem.save().then(function(inventoryItem) {
+      equal(inventoryItem.get('cartItems.length'), 1, "inventory has 1 cart item");
+
+      return cartItem.save();
+    }).then(function(cartItem) {
+      equal(inventoryItem.get('cartItems.length'), 1, "inventory has 1 cart item");
+
+      inventoryItem.save().then(function(inventoryItem) {
+        return inventoryItem.reload();
+      }).then(function(inventoryItem) {
+        equal(inventoryItem.get('cartItems.length'), 1, "inventory has 1 cart item");
+        start();
+      });
     });
   });
 });
