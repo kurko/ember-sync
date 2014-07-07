@@ -116,9 +116,12 @@ related to Ember Sync itself, but here's an example:
     previous example.
 
 2. **Define an offline store:** just define an adapter and serializer as you
-would normally do. Here we're using
-[IndexedDBAdapter](https://github.com/kurko/ember-indexeddb-adapter). This
-offline store will be located at `this.store` by default.
+would normally do. This offline store will be located at `this.store` by
+default.
+
+    You may use [IndexedDBAdapter](https://github.com/kurko/ember-indexeddb-adapter),
+    [LocalStorageAdapter](https://github.com/rpflorence/ember-localstorage-adapter)
+    or others.
 
     **Important:** if you're using an offline store that requires you to
     manually create tables/object stores, create `emberSyncQueueModel`.
