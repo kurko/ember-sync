@@ -5,6 +5,9 @@ Ember Sync allows your Ember.js application to seamlessly work online and offlin
 
 **Alpha version:** beware of the risks if you want to try it in production.
 
+This README documents the state of master, probably there is features
+described here that do not reflect the status of previous/latest releases.
+
 ### How it works
 
 Ember Sync has a queue of operations. Every time you save, update or delete
