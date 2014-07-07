@@ -112,6 +112,9 @@ related to Ember Sync itself, but here's an example:
     };
     ```
 
+    If you don't need a custom serializer you don't need to define it as in
+    previous example.
+
 2. **Define an offline store:** just define an adapter and serializer as you
 would normally do. Here we're using
 [IndexedDBAdapter](https://github.com/kurko/ember-indexeddb-adapter). This
