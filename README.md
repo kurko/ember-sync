@@ -5,6 +5,9 @@ Ember Sync allows your Ember.js application to seamlessly work online and offlin
 
 **Alpha version:** beware of the risks if you want to try it in production.
 
+This README documents the state of master, probably there is features
+described here that do not reflect the status of previous/latest releases.
+
 ### How it works
 
 Ember Sync has a queue of operations. Every time you save, update or delete
@@ -109,10 +112,16 @@ related to Ember Sync itself, but here's an example:
     };
     ```
 
+    If you don't need a custom serializer you don't need to define it as in
+    previous example.
+
 2. **Define an offline store:** just define an adapter and serializer as you
-would normally do. Here we're using
-[IndexedDBAdapter](https://github.com/kurko/ember-indexeddb-adapter). This
-offline store will be located at `this.store` by default.
+would normally do. This offline store will be located at `this.store` by
+default.
+
+    You may use [IndexedDBAdapter](https://github.com/kurko/ember-indexeddb-adapter),
+    [LocalStorageAdapter](https://github.com/rpflorence/ember-localstorage-adapter)
+    or others.
 
     **Important:** if you're using an offline store that requires you to
     manually create tables/object stores, create `emberSyncQueueModel`.
