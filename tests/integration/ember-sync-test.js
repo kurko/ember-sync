@@ -40,7 +40,15 @@ module("Integration/Lib/EmberSync", {
     offlineStore = env.store;
     onlineStore = env.onlineStore;
 
-    emberSync = EmberSync.create({ container: env });
+    var onlineSerializer = DS.LSSerializer.extend();
+    var onlineAdapter = DS.LSAdapter.extend({
+      namespace: 'onlineStore'
+    });
+
+    emberSync = EmberSync.create();
+    emberSync.set('offlineStore',     offlineStore);
+    emberSync.set('onlineAdapter',    onlineAdapter);
+    emberSync.set('onlineSerializer', onlineSerializer);
   }
 });
 
@@ -130,13 +138,22 @@ test("#save - creates a record offline and online", function() {
 
     offlineSave = record.emberSync.save();
     offlineSave.then(function(record) {
-      ok(true, "Record saved offline");
       equal(record.get('id'),             generatedId,    "id is correct");
       equal(record.get('name'),           "Fender",       "name is correct");
       equal(record.get('description'),    "Super guitar", "description is correct");
       equal(record.get('price'),          "123",          "price is correct");
       equal(record.get('entryForSaleId'), "1",            "entryForSaleId is correct");
       equal(record.get('onSale'),         true,           "onSale is correct");
+      ok(true, "Returned record is correct");
+
+      record = getModelLS('offline', 'inventoryItem', generatedId);
+      equal(record.id,             generatedId,    "id is correct");
+      equal(record.name,           "Fender",       "name is correct");
+      equal(record.description,    "Super guitar", "description is correct");
+      equal(record.price,          "123",          "price is correct");
+      equal(record.entryForSaleId, "1",            "entryForSaleId is correct");
+      equal(record.onSale,         true,           "onSale is correct");
+      ok(true, "Record was successfully saved offline");
 
       Em.run.later(function() {
         emberSync.synchronizeOnline();
@@ -163,17 +180,25 @@ test("#save - creates a record offline and online", function() {
 });
 
 test("#find - searches offline/online simultaneously, syncing online into offline and returning a stream of data", function() {
-  onlineStore.push('cashEntry', {
-    id: 1,
-    amount: '120',
-    description: 'First entry',
-    createdAt: myDate()
+  var fixture;
+
+  fixture = JSON.stringify({
+    cashEntry: {
+      records: {
+        1: {
+          id: "1",
+          amount: "120",
+          description: "First entry",
+          createdAt: myDate()
+        }
+      }
+    }
   });
+  localStorage.setItem('onlineStore', fixture);
 
   stop();
 
   Em.run(function() {
-
     assertItemDoesntExistOffline('cashEntry', 1).then(function() {
       return emberSync.find('cashEntry', 1);
     }).then(function(item) {

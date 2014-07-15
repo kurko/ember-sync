@@ -4,6 +4,7 @@ var RecordForSynchronization = require('lib/ember-sync/record-for-synchronizatio
 var env = {}, emberSync, subject,
     onlineResults, jobRecord, jobRecordModel,
     cart,
+    cartModel, customerModel, cartItemModel,
     offlineStore, onlineStore,
     createdAt = new Date,
     createdAtAsString = "Thu, 06 Feb 2014 03:02:02 GMT",
@@ -12,19 +13,19 @@ var env = {}, emberSync, subject,
 module("Unit - Lib/EmberSync/RecordForSynchronization", {
   setup: function() {
     Em.run(function() {
-      cart = DS.Model.extend({
+      cartModel = DS.Model.extend({
         total:     DS.attr('string'),
         createdAt: DS.attr('date'),
         cartItems: DS.hasMany('cartItem'),
         customer:  DS.belongsTo('customer'),
       });
 
-      customer = DS.Model.extend({
+      customerModel = DS.Model.extend({
         name: DS.attr('number'),
         cart: DS.belongsTo('cart'),
       });
 
-      cartItem = DS.Model.extend({
+      cartItemModel = DS.Model.extend({
         price: DS.attr('number'),
         cart:  DS.belongsTo('cart'),
       });
@@ -32,9 +33,9 @@ module("Unit - Lib/EmberSync/RecordForSynchronization", {
       EmberSync.testing = true;
 
       env = setupOfflineOnlineStore({
-        cart: cart,
-        cartItem: cartItem,
-        customer: customer,
+        cart: cartModel,
+        cartItem: cartItemModel,
+        customer: customerModel,
         emberSyncQueueModel: EmberSyncQueueModel
       });
 
@@ -69,11 +70,18 @@ module("Unit - Lib/EmberSync/RecordForSynchronization", {
         if (!customCart) {
           customCart = cart;
         }
+
+        var onlineSerializer = DS.LSSerializer.extend();
+        var onlineAdapter = DS.LSAdapter.extend({
+          namespace: 'onlineStore'
+        });
+
         return RecordForSynchronization.create({
-          offlineStore:    offlineStore,
-          onlineStore:     onlineStore,
-          offlineRecord:   customCart,
-          jobRecord:       jobRecord
+          offlineStore:     offlineStore,
+          onlineAdapter:    onlineAdapter,
+          onlineSerializer: onlineSerializer,
+          offlineRecord:    customCart,
+          jobRecord:        jobRecord
         });
       };
     });
@@ -260,26 +268,57 @@ test("#propertiesToPersist returns only attributes", function() {
   });
 });
 
-test("#setDateObjectsInsteadOfDateString returns only attributes", function() {
+test("#setDateObjectsInsteadOfDateString - converts date attributes when it's present", function() {
   var result, serialized;
-  stop();
 
-  Em.run(function() {
-    cart = offlineStore.createRecord('cart', {
-      total: 5,
-      createdAt: new Date(Date.parse(createdAtAsString))
-    });
+  serialized = {
+    id: "1234",
+    total: "5",
+    createdAt: createdAtAsString
+  };
 
-    serialized = {
-      id: cart.get('id'),
-      total: "5",
-      createdAt: createdAtAsString
-    };
+  result = subject().setDateObjectsInsteadOfDateString(cartModel, serialized);
 
-    result = subject(cart).setDateObjectsInsteadOfDateString(cart, serialized);
+  equal(typeof result.createdAt, "object", "createdAt is not a String, but an object");
+  deepEqual(result.createdAt, new Date(Date.parse(createdAtAsString)), "dates strings are converted to date objects");
+});
 
-    equal(typeof result.createdAt, "object", "createdAt is not a String, but an object");
-    deepEqual(result.createdAt, new Date(Date.parse(createdAtAsString)), "dates strings are converted to date objects");
-    start();
-  });
+test("#setDateObjectsInsteadOfDateString - converts date attributes when it's present", function() {
+  var result, serialized;
+
+  serialized = {
+    id: "1234",
+    total: "5",
+    createdAt: null
+  };
+
+  try {
+    subject().setDateObjectsInsteadOfDateString(cartModel, serialized);
+  } catch(e) {
+    equal(e, "Attribute 'createdAt' is not a valid date", "throws error on invalid date");
+  }
+});
+
+test("#mimicModelObject - returns Ember.Object with serialize()", function() {
+  var result, serialized;
+
+  serialized = {
+    id:    "abc",
+    total: "5.0"
+  };
+
+  result = subject().mimicModelObject(serialized);
+
+  equal(result.id,    "abc", "id returns abc");
+  equal(result.total, "5.0", "total returns 5.0");
+  equal(result.serialize(), serialized, "#serialized");
+  equal(result.serialize({includeId: true}), serialized, "#serialized with id");
+  deepEqual(result.serialize({includeId: false}), {total: "5.0"}, "#serialized without ID");
+});
+
+test("#mimicModelPrototype - returns object with typeKey()", function() {
+  var result;
+
+  result = subject().mimicModelPrototype('inventoryItem');
+  equal(result.typeKey, "inventoryItem", "model.typeKey returns string");
 });
