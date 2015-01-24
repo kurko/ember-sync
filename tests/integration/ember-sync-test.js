@@ -27,7 +27,9 @@ module("Integration/Lib/EmberSync", {
     var CashEntry = DS.Model.extend({
       amount:      DS.attr('number'),
       description: DS.attr('string'),
-      createdAt:   DS.attr('date')
+      createdAt:   DS.attr('date', {
+        defaultValue: function() { return new Date(); }
+      })
     });
 
     env = setupOfflineOnlineStore({

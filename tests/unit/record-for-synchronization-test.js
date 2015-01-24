@@ -14,7 +14,9 @@ module("Unit - Lib/EmberSync/RecordForSynchronization", {
     Em.run(function() {
       cart = DS.Model.extend({
         total:     DS.attr('string'),
-        createdAt: DS.attr('date'),
+        createdAt: DS.attr('date', {
+          default: function() { return new Date(); }
+        }),
         cartItems: DS.hasMany('cartItem'),
         customer:  DS.belongsTo('customer'),
       });
@@ -140,13 +142,15 @@ test("#createRecordInStore unloads previous record and recreates it with operati
 });
 
 test("#createRecordInStore returns record that serialize dates", function() {
-  var result, serialized;
+  var result, serialized, date;
+
+  now = new Date(Date.parse("Thu, 06 Feb 2014 04:49:57 GMT"));
   stop();
 
   Em.run(function() {
     cart = offlineStore.createRecord('cart', {
       total: "10",
-      createdAt: (new Date(Date.parse("Thu, 06 Feb 2014 04:49:57 GMT")))
+      createdAt: now
     });
     jobRecordModel = offlineStore.createRecord('emberSyncQueueModel', {
       jobRecordType: "cart",
@@ -177,7 +181,7 @@ test("#createRecordInStore returns record that serialize dates", function() {
     // equal(result.get('createdAt'), "Thu Feb 06 2014 02:49:57 GMT-0200 (BRST)", "Record has createdAt with correct value");
 
     serialized = result.serialize();
-    equal(serialized.createdAt, "Thu, 06 Feb 2014 04:49:57 GMT", "Serialized record has createdAt");
+    equal(serialized.createdAt, "2014-02-06T04:49:57.000Z", "Serialized record has createdAt");
 
     start();
   });
