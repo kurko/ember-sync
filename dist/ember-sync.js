@@ -950,7 +950,8 @@
        */
       persistRecordOffline: function(type, record) {
         var offlineSerializer = this.offlineStore.serializerFor(type),
-            serialized = offlineSerializer.serialize(record, { includeId: true }),
+            snapshot = record._createSnapshot(),
+            serialized = offlineSerializer.serialize(snapshot, { includeId: true }),
             model, recordForSynchronization;
 
         recordForSynchronization = RecordForSynchronization.create();

@@ -1,6 +1,6 @@
 {
   "name": "ember-sync",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Ember Sync allows your Ember.js application to seamlessly work online and offline.",
   "main": "./dist/ember-sync.js",
   "repository": {
