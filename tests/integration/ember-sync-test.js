@@ -202,6 +202,53 @@ test("#find - searches offline/online simultaneously, syncing online into offlin
   });
 });
 
+test("#find - searches offline/online simultaneously, syncing online into offline (with hasMany relationships) and returning a stream of data", function() {
+  fixture = JSON.stringify({
+    inventoryItem: {
+      records: { // this schema is how LSAdapter works
+        1: { id: 1, name: "Fender", cartItems:[1] }
+      }
+    },
+    cartItem: {
+      records: {
+        1: { id: 111, name: 'Fender Cart Item' }
+      }
+    }
+  });
+  localStorage.setItem('onlineStore', fixture);
+
+  stop();
+
+  Em.run(function() {
+    assertItemDoesntExistOffline('inventoryItem', 1).then(function() {
+      return emberSync.find('inventoryItem', 1);
+    }).then(function(item) {
+      Em.run.later(function() {
+        equal(item.get('name'), "Fender", "Data from onlineStore");
+      }, 70);
+
+      Em.run.later(function() {
+        offlineStore.find('inventoryItem', 1).then(function(item) {
+          var cartItem;
+
+          ok(true, "Item was added to the offline store");
+          equal(item.get('id'), 1, "New offline item has a correct id");
+          equal(item.get('name'), "Fender", "New offline item has a correct name");
+
+          cartItem = item.get('cartItems');
+          equal(cartItem.get('firstObject.id'), 111, "hasMany assoc is present offline (correct id)");
+          equal(cartItem.get('firstObject.name'), "Fender Cart Item", "hasMany assoc is present offline (correct name)");
+
+          start();
+        }, function() {
+          console.log("Item was not added to the offline store");
+          ok(false, "Item was added to the offline store");
+        });
+      }, 70);
+    });
+  });
+});
+
 test("#find - injects emberSync into the returned records", function() {
   onlineStore.push('cashEntry', { id: 1, amount: '120' });
 

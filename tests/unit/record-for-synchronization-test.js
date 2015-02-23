@@ -264,7 +264,7 @@ test("#propertiesToPersist returns only attributes", function() {
   });
 });
 
-test("#setDateObjectsInsteadOfDateString returns only attributes", function() {
+test("#setDateObjectsInsteadOfDateString converts dates as ISO8601 strings", function() {
   var result, serialized;
   stop();
 
@@ -280,7 +280,7 @@ test("#setDateObjectsInsteadOfDateString returns only attributes", function() {
       createdAt: createdAtAsString
     };
 
-    result = subject(cart).setDateObjectsInsteadOfDateString(cart, serialized);
+    result = subject(cart).setDateObjectsInsteadOfDateString('cart', serialized);
 
     equal(typeof result.createdAt, "object", "createdAt is not a String, but an object");
     deepEqual(result.createdAt, new Date(Date.parse(createdAtAsString)), "dates strings are converted to date objects");
