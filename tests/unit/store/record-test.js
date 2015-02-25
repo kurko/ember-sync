@@ -79,56 +79,10 @@ test("#pushableCollection returns serialized object", function() {
 
   collection = subject().pushableCollection();
 
-  /**
-   * Main record
-   *
-   * will check that the main record is returned serialized in the collection.
-   */
-  for (var index in collection.cart) {
-    var carts = collection.cart;
-    if (!carts.hasOwnProperty(index)) {
-      continue;
-    }
-
-    if (carts[index].id == 13) {
-      equal(carts[index].total, cart.get('total'), 'total is good');
-      equal(carts[index].createdAt, createdAtAsString, 'total is good');
-    }
-  }
-
-  /**
-   * belongsTo associations
-   *
-   * will check that the belongsTo associations are returned serialized in the
-   * collection.
-   */
-  for (var index in collection.customer) {
-    var customers = collection.customer;
-    if (!customers.hasOwnProperty(index)) {
-      continue;
-    }
-
-    if (customers[index].id == 11) {
-      equal(customers[index].name, 'Alex', 'customer name is good');
-      equal(customers[index].cart, 13, 'customer cart is good');
-    }
-  }
-
-  /**
-   * hasMany
-   *
-   * will check that the hasMany associations are returned serialized in the
-   * collection.
-   */
-  for (var index in collection.cartItem) {
-    var cartItems = collection.cartItem;
-    if (!cartItems.hasOwnProperty(index)) {
-      continue;
-    }
-
-    if (cartItems[index].id == 12) {
-      equal(cartItems[index].price, 12, 'item price is good');
-      equal(cartItems[index].cart,  13, 'item cart is good');
-    }
-  }
+  equal(collection.cart[0].total, cart.get('total'), 'total is good');
+  equal(collection.cart[0].createdAt, createdAtAsString, 'total is good');
+  equal(collection.customer[0].name, 'Alex', 'customer name is good');
+  equal(collection.customer[0].cart, 13, 'customer cart is good');
+  equal(collection.cartItem[0].price, 12, 'item price is good');
+  equal(collection.cartItem[0].cart,  13, 'item cart is good');
 });

@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "qunit": "",
-    "ember-localstorage-adapter": "~0.5.1",
+    "ember-localstorage-adapter": "~0.5.2",
     "loader.js": "stefanpenner/loader.js#1.0.1"
   },
   "resolutions": {

@@ -233,7 +233,7 @@
           serialized:    properties
         });
         adapter = this.offlineStore.adapterFor(type);
-        adapter.createRecord(null, this.offlineStore.modelFor('emberSyncQueueModel'), job);
+        adapter.createRecord(this.offlineStore, this.offlineStore.modelFor('emberSyncQueueModel'), job);
         job.deleteRecord();
       },
 
@@ -1004,8 +1004,11 @@
     __exports__["default"] = Ember.Object.extend({
       store: null,
       snapshot: null,
-      collection: {},
 
+      init: function() {
+        this.set('collection', {});
+        this._super();
+      },
       /**
        * This method will get a snapshot and will return an object with:
        *
