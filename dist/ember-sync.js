@@ -204,7 +204,7 @@
         this.set('pendingJobs', Ember.A());
         this.set('retryOnFailureDelay', 10000);
         this.set('emptyQueueRetryDelay', 5000);
-        //this.set('debug', true);
+        this.set('debug', false);
         this.set('isError', null);
 
         if (!this.get('onError')) {
@@ -390,6 +390,9 @@
       init: function() {
         this._super();
         this.set("debug", false);
+        if (this.get('debug')) {
+          console.log("[DEBUG] EmberSync.Job#init: jobRecord", this.get('jobRecord'));
+        }
       },
 
       perform: function() {
@@ -425,7 +428,7 @@
           }
         }, function(error) {
           if (_this.get('debug')) {
-            debugger;
+            console.error(error);
           }
         });
 
@@ -538,10 +541,11 @@
     });
   });
 ;define("ember-sync/record-for-synchronization", 
-  ["ember-sync/store-initialization-mixin","exports"],
-  function(__dependency1__, __exports__) {
+  ["ember-sync/store-initialization-mixin","ember-sync/store/record","exports"],
+  function(__dependency1__, __dependency2__, __exports__) {
     "use strict";
     var StoreInitMixin = __dependency1__["default"];
+    var StoreRecord = __dependency2__["default"];
 
     __exports__["default"] = Ember.Object.extend(
       StoreInitMixin, {
@@ -608,10 +612,30 @@
         var offlineRecord = this.get('offlineRecord'),
             originalSerialized = this.get('jobRecord.serialized'),
             type = this.get('jobRecord.jobRecordType'),
+            snapshot,
+            storeRecord,
             properties;
 
          properties = this.serializeWithoutRelationships(type, offlineRecord, originalSerialized);
-         return this.setDateObjectsInsteadOfDateString(type, properties);
+
+         if (offlineRecord) {
+           snapshot = offlineRecord._createSnapshot();
+         }
+
+         storeRecord = StoreRecord.create({
+           store: this.offlineStore
+         });
+
+         /**
+          * In some cases, you have the job in the queue, serialized, and you lost
+          * the original record. You can't really instantiate it anymore because
+          * it's not present in the store.
+          */
+         if (snapshot) {
+           return storeRecord.setDateObjectsInsteadOfDateString(snapshot, properties);
+         } else {
+           return properties;
+         }
       },
 
       setRelationships: function(pendingRecord) {
@@ -692,16 +716,134 @@
         });
 
         return serializedCopy;
+      }
+    });
+  });
+;define("ember-sync/store/record", 
+  ["exports"],
+  function(__exports__) {
+    "use strict";
+    __exports__["default"] = Ember.Object.extend({
+      store: null,
+      snapshot: null,
+
+      init: function() {
+        this.set('collection', {});
+        this._super();
+      },
+      /**
+       * This method will get a snapshot and will return an object with:
+       *
+       *   * main record serialized
+       *   * belongsTo records serialized
+       *   * hasMany records serialized
+       *
+       * The format is the following:
+       *
+       *   {
+       *     'cart': [{
+       *       'id': 1,
+       *       'customer': 2,
+       *     }],
+       *     'customer': [{
+       *       'id': 2,
+       *       'name': 'Alex'
+       *     }]
+       *   }
+       *
+       * where the object key is the record's typeKey.
+       *
+       * That way, when we have something to push into the store, we can use this
+       * to figure out everything related to the main record.
+       *
+       * @method pushableCollection
+       * @public
+       * @return {object}
+       */
+      pushableCollection: function() {
+        var mainRecordType = this._snapshot().typeKey,
+            serializedMainRecord = this.serialize(this._snapshot());
+
+        /**
+         * Pushing associations.
+         */
+        this._serializeAssociations();
+
+        /**
+         * Pushes main record.
+         */
+        serializedMainRecord = this.setDateObjectsInsteadOfDateString(this._snapshot(), serializedMainRecord);
+        this.get('collection')[mainRecordType] = [];
+        this.get('collection')[mainRecordType].push(serializedMainRecord);
+
+        return this.get('collection');
       },
 
-      setDateObjectsInsteadOfDateString: function(type, serialized) {
-        var fakeRecord = this.get('offlineStore').createRecord(type);
+      serialize: function(snapshot) {
+        var type = snapshot.typeKey;
+        return this._serializer(type).serialize(snapshot, { includeId: true });
+      },
 
-        fakeRecord.eachAttribute(function(attr, details) {
+      /**
+       * This method will get every association, serialize it and push into
+       * `this.get('collection')`. It will mutate the object's collection property.
+       *
+       * @method _serializeAssociations
+       * @private
+       */
+      _serializeAssociations: function() {
+        var serializedCollection = [],
+            _this = this,
+            snapshot = this._snapshot();
+
+        snapshot.eachRelationship(function(name, relationship) {
+          var hasManyRecords = null;
+
+          var pushToCollection = function(snapshot) {
+            var serialized = _this.serialize(snapshot),
+                type = snapshot.typeKey;
+
+            _this.setDateObjectsInsteadOfDateString(snapshot, serialized);
+
+            if (!_this.get('collection')[type]) {
+              _this.get('collection')[type] = [];
+            }
+
+            _this.get('collection')[type].push(serialized);
+          }
+
+          /**
+           * Will push belongsTo assocs to the final collection.
+           */
+          if (relationship.kind === "belongsTo") {
+            pushToCollection(snapshot.belongsTo(name));
+          }
+          /**
+           * Pushes hasMany associations into the final collection.
+           */
+          else if (relationship.kind === "hasMany") {
+            hasManyRecords = snapshot.hasMany(name);
+
+            for (var record in hasManyRecords) {
+              if (hasManyRecords.hasOwnProperty(record)) {
+                pushToCollection(hasManyRecords[record]);
+              }
+            }
+          }
+        });
+      },
+
+      setDateObjectsInsteadOfDateString: function(snapshot, serialized) {
+        if (!snapshot) {
+          throw "No snapshot defined";
+        }
+
+        snapshot.eachAttribute(function(attr, details) {
           if (details.type == "date" && typeof serialized[attr]) {
             if (serialized[attr]) {
               serialized[attr] = new Date(Date.parse(serialized[attr]));
             } else {
+              console.log('there is no ' + attr);
               throw "WAT?"
               //serialized[attr] = new Date(Date.parse(fakeRecord.get('createdAt')));
             }
@@ -709,6 +851,22 @@
         });
 
         return serialized;
+      },
+
+      _store: function() {
+        return this.get('store');
+      },
+
+      _type: function() {
+        return this.get('type');
+      },
+
+      _snapshot: function() {
+        return this.get('snapshot');
+      },
+
+      _serializer: function(type) {
+        return this._store().serializerFor(type);
       }
     });
   });
@@ -972,13 +1130,7 @@
             }
 
             var serialized = recordForSynchronization[typeKey][index],
-                record,
                 model;
-
-            record = RecordForSynchronization.create({
-              offlineStore: this.offlineStore
-            });
-            record.setDateObjectsInsteadOfDateString(typeKey, serialized);
 
             model = this.offlineStore.push(typeKey, serialized);
             model.save();
@@ -995,134 +1147,6 @@
           return "update";
         }
       },
-    });
-  });
-;define("ember-sync/store/record", 
-  ["exports"],
-  function(__exports__) {
-    "use strict";
-    __exports__["default"] = Ember.Object.extend({
-      store: null,
-      snapshot: null,
-
-      init: function() {
-        this.set('collection', {});
-        this._super();
-      },
-      /**
-       * This method will get a snapshot and will return an object with:
-       *
-       *   * main record serialized
-       *   * belongsTo records serialized
-       *   * hasMany records serialized
-       *
-       * The format is the following:
-       *
-       *   {
-       *     'cart': [{
-       *       'id': 1,
-       *       'customer': 2,
-       *     }],
-       *     'customer': [{
-       *       'id': 2,
-       *       'name': 'Alex'
-       *     }]
-       *   }
-       *
-       * where the object key is the record's typeKey.
-       *
-       * That way, when we have something to push into the store, we can use this
-       * to figure out everything related to the main record.
-       *
-       * @method pushableCollection
-       * @public
-       * @return {object}
-       */
-      pushableCollection: function() {
-        var mainRecordType = this._snapshot().typeKey,
-            serializedMainRecord = this.serialize(this._snapshot());
-
-        /**
-         * Pushing associations.
-         */
-        this._serializeAssociations();
-
-        /**
-         * Pushes main record.
-         */
-        this.get('collection')[mainRecordType] = [];
-        this.get('collection')[mainRecordType].push(serializedMainRecord);
-
-        return this.get('collection');
-      },
-
-      serialize: function(snapshot) {
-        var type = snapshot.typeKey;
-        return this._serializer(type).serialize(snapshot, { includeId: true });
-      },
-
-      /**
-       * This method will get every association, serialize it and push into
-       * `this.get('collection')`. It will mutate the object's collection property.
-       *
-       * @method _serializeAssociations
-       * @private
-       */
-      _serializeAssociations: function() {
-        var serializedCollection = [],
-            _this = this,
-            snapshot = this._snapshot();
-
-        snapshot.eachRelationship(function(name, relationship) {
-          var hasManyRecords = null;
-
-          var pushToCollection = function(snapshot) {
-            var serialized = _this.serialize(snapshot),
-                type = snapshot.typeKey;
-
-            if (!_this.get('collection')[type]) {
-              _this.get('collection')[type] = [];
-            }
-
-            _this.get('collection')[type].push(serialized);
-          }
-
-          /**
-           * Will push belongsTo assocs to the final collection.
-           */
-          if (relationship.kind === "belongsTo") {
-            pushToCollection(snapshot.belongsTo(name));
-          }
-          /**
-           * Pushes hasMany associations into the final collection.
-           */
-          else if (relationship.kind === "hasMany") {
-            hasManyRecords = snapshot.hasMany(name);
-
-            for (var record in hasManyRecords) {
-              if (hasManyRecords.hasOwnProperty(record)) {
-                pushToCollection(hasManyRecords[record]);
-              }
-            }
-          }
-        });
-      },
-
-      _store: function() {
-        return this.get('store');
-      },
-
-      _type: function() {
-        return this.get('type');
-      },
-
-      _snapshot: function() {
-        return this.get('snapshot');
-      },
-
-      _serializer: function(type) {
-        return this._store().serializerFor(type);
-      }
     });
   });
 ;define("ember-sync/ember-sync-queue-model", 
