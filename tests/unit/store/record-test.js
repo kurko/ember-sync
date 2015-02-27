@@ -60,7 +60,10 @@ module("Unit - Lib/EmberSync/Store/Record", {
       cart.set('customer', customer)
       cart.get('cartItems').pushObject(cartItem);
 
-      subject = function() {
+      subject = function(customCart) {
+        if (!customCart) {
+          customCart = cart;
+        }
         return StoreRecord.create({
           store: offlineStore,
           snapshot: cart._createSnapshot()
@@ -80,9 +83,33 @@ test("#pushableCollection returns serialized object", function() {
   collection = subject().pushableCollection();
 
   equal(collection.cart[0].total, cart.get('total'), 'total is good');
-  equal(collection.cart[0].createdAt, createdAtAsString, 'total is good');
+  equal(collection.cart[0].createdAt.toString(), createdAt.toString(), 'createdAt is good');
   equal(collection.customer[0].name, 'Alex', 'customer name is good');
   equal(collection.customer[0].cart, 13, 'customer cart is good');
   equal(collection.cartItem[0].price, 12, 'item price is good');
   equal(collection.cartItem[0].cart,  13, 'item cart is good');
+});
+
+test("#setDateObjectsInsteadOfDateString converts dates as ISO8601 strings", function() {
+  var result, serialized;
+  stop();
+
+  Em.run(function() {
+    cart = offlineStore.createRecord('cart', {
+      total: 5,
+      createdAt: new Date(Date.parse(createdAtAsString))
+    });
+
+    serialized = {
+      id: cart.get('id'),
+      total: "5",
+      createdAt: createdAtAsString
+    };
+
+    result = subject(cart).setDateObjectsInsteadOfDateString(cart._createSnapshot(), serialized);
+
+    equal(typeof result.createdAt, "object", "createdAt is not a String, but an object");
+    deepEqual(result.createdAt, new Date(Date.parse(createdAtAsString)), "dates strings are converted to date objects");
+    start();
+  });
 });

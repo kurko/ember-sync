@@ -263,27 +263,3 @@ test("#propertiesToPersist returns only attributes", function() {
     start();
   });
 });
-
-test("#setDateObjectsInsteadOfDateString converts dates as ISO8601 strings", function() {
-  var result, serialized;
-  stop();
-
-  Em.run(function() {
-    cart = offlineStore.createRecord('cart', {
-      total: 5,
-      createdAt: new Date(Date.parse(createdAtAsString))
-    });
-
-    serialized = {
-      id: cart.get('id'),
-      total: "5",
-      createdAt: createdAtAsString
-    };
-
-    result = subject(cart).setDateObjectsInsteadOfDateString('cart', serialized);
-
-    equal(typeof result.createdAt, "object", "createdAt is not a String, but an object");
-    deepEqual(result.createdAt, new Date(Date.parse(createdAtAsString)), "dates strings are converted to date objects");
-    start();
-  });
-});

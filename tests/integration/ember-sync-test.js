@@ -177,6 +177,7 @@ test("#find - searches offline/online simultaneously, syncing online into offlin
   Em.run(function() {
 
     assertItemDoesntExistOffline('cashEntry', 1).then(function() {
+      equal(getModelLS('offline', 'cashEntry').length, 0);
       return emberSync.find('cashEntry', 1);
     }).then(function(item) {
       Em.run.later(function() {
@@ -186,6 +187,7 @@ test("#find - searches offline/online simultaneously, syncing online into offlin
 
       Em.run.later(function() {
         offlineStore.find('cashEntry', 1).then(function(item) {
+          equal(getModelLS('offline', 'cashEntry').length, 1);
 
           ok(true, "Item was added to the offline store");
           equal(item.get('id'), 1, "New offline item has a correct id");
@@ -193,6 +195,10 @@ test("#find - searches offline/online simultaneously, syncing online into offlin
           ok(item.get('createdAt'), "createdAt is present offline");
           equal(item.get('createdAt').getDate(), (new Date).getDate(), "Offline date is correct");
           start();
+
+          offlineStore.find('cashEntry').then(function(records) {
+            equal(records.get('length'), 1, "there is 1 cash entry in store");
+          });
         }, function() {
           console.log("Item was not added to the offline store");
           ok(false, "Item was added to the offline store");
