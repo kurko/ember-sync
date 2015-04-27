@@ -292,10 +292,10 @@ First, install depdendencies with `npm install` and `bower install`. Then run
 
 Visit `http://localhost:4200/tests`.
 
-If you prefer, use `npm run-script test-all` in your terminal. You need to
+If you prefer, use `npm run test-all` in your terminal. You need to
 have PhantomJS installed.
 
-To build a new version, just run `npm run-script build`. The build will be
+To build a new version, just run `npm run build`. The build will be
 available in the `dist/` directory.
 
 License & Copyright
